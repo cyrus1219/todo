@@ -24,7 +24,7 @@ format_morning_reminder() {
     
     python3 -c "
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 data = json.loads('''$todos''')
 todos = data.get('todos', [])
@@ -40,17 +40,20 @@ print('=' * 60)
 if high:
     print('\n🔴 【高优先级】')
     for i, t in enumerate(high, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if medium:
     print('\n🟡 【中优先级】')
     for i, t in enumerate(medium, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if low:
     print('\n🟢 【低优先级】')
     for i, t in enumerate(low, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 total_pending = len(high) + len(medium) + len(low)
 print(f'\n📊 统计：待完成 {total_pending} 项，已完成 {len(completed)} 项')
@@ -65,7 +68,7 @@ format_evening_checkin() {
     
     python3 -c "
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 data = json.loads('''$todos''')
 todos = data.get('todos', [])
@@ -81,28 +84,32 @@ print('=' * 60)
 if completed:
     print('\n✅ 【已完成】')
     for i, t in enumerate(completed, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if high:
     print('\n🔴 【还未完成 - 高优先级】')
     for i, t in enumerate(high, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if medium:
     print('\n🟡 【还未完成 - 中优先级】')
     for i, t in enumerate(medium, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if low:
     print('\n🟢 【还未完成 - 低优先级】')
     for i, t in enumerate(low, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 print(f'\n📊 统计：已完成 {len(completed)} 项，待完成 {len(high) + len(medium) + len(low)} 项')
 print('=' * 60)
 print('\n告诉我：')
-print('• 哪些已经完成了？（说"完成第X项"）')
-print('• 哪些需要调整优先级？')
+print('• 哪些已经完成了？（说完成第X项）')
+print('• 哪些需要调整优先级或截止时间？')
 print('• 明天有什么新的待办事项要添加吗？')
 "
 }

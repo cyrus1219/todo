@@ -33,6 +33,7 @@ save_todos() {
 add_todo() {
     local text="$1"
     local priority="${2:-medium}"
+    local dueDate="$3"
     
     if [ -z "$text" ]; then
         echo -e "${RED}❌ 请提供待办事项内容${NC}"
@@ -50,6 +51,7 @@ add_todo() {
   "priority": "$priority",
   "completed": false,
   "createdAt": "$now"
+  $(if [ -n "$dueDate" ]; then echo ",\"dueDate\": \"$dueDate\""; fi)
 }
 EOF
 )
@@ -74,6 +76,8 @@ list_todos() {
     
     python3 -c "
 import json
+from datetime import datetime
+
 data = json.loads('''$todos''')
 todos = data.get('todos', [])
 
@@ -89,7 +93,8 @@ else:
         status = '✅' if todo['completed'] else '⬜'
         emoji = priority_emoji.get(todo['priority'], '⚪')
         p_name = priority_name.get(todo['priority'], '未知')
-        print(f'{i}. {status} {emoji} [{p_name}] {todo[\"text\"]}')
+        due_date = todo.get('dueDate', '无截止时间')
+        print(f'{i}. {status} {emoji} [{p_name}] {todo[\"text\"]} (截止: {due_date})')
     
     print(f'\n总计: {len(todos)} 项')
 "
@@ -186,7 +191,7 @@ format_todos_for_push() {
     
     python3 -c "
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 data = json.loads('''$todos''')
 todos = data.get('todos', [])
@@ -197,25 +202,28 @@ low = [t for t in todos if t['priority'] == 'low' and not t['completed']]
 completed = [t for t in todos if t['completed']]
 
 print('📋 待办事项清单')
-print('=' * 50)
+print('=' * 60)
 
 if high:
     print('\n🔴 高优先级:')
     for i, t in enumerate(high, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if medium:
     print('\n🟡 中优先级:')
     for i, t in enumerate(medium, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 if low:
     print('\n🟢 低优先级:')
     for i, t in enumerate(low, 1):
-        print(f'  {i}. {t[\"text\"]}')
+        due = t.get('dueDate', '无截止时间')
+        print(f'  {i}. {t[\"text\"]} (截止: {due})')
 
 print(f'\n✅ 已完成: {len(completed)} 项')
-print('=' * 50)
+print('=' * 60)
 "
 }
 
@@ -225,7 +233,7 @@ show_help() {
 📋 ToDo List 管理工具
 
 用法:
-  $0 add <内容> [优先级]  - 添加待办事项 (优先级: high/medium/low)
+  $0 add <内容> [优先级] [截止日期]  - 添加待办事项 (优先级: high/medium/low, 截止日期: YYYY-MM-DD)
   $0 list                  - 列出所有待办事项
   $0 complete <序号>        - 标记待办事项为完成
   $0 delete <序号>          - 删除待办事项
@@ -234,7 +242,7 @@ show_help() {
   $0 help                   - 显示帮助
 
 示例:
-  $0 add \"完成项目报告\" high
+  $0 add \"完成项目报告\" high 2026-03-10
   $0 list
   $0 complete 1
   $0 push \"更新待办事项\"

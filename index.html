@@ -127,7 +127,7 @@
 
         .todo-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 15px;
             padding: 16px;
             background: #f8f9fa;
@@ -165,15 +165,59 @@
             border-left-color: #27ae60;
         }
 
+        .todo-item.urgent {
+            background: #fff5f5;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+        }
+
         .status-icon {
             font-size: 1.5rem;
             flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .todo-content {
+            flex: 1;
         }
 
         .todo-text {
-            flex: 1;
             font-size: 1rem;
             line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .todo-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .due-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .due-date.urgent {
+            background: #fee;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .due-date.upcoming {
+            background: #fff3cd;
+            color: #f39c12;
         }
 
         .priority-badge {
@@ -246,6 +290,10 @@
                 flex-wrap: wrap;
             }
 
+            .todo-meta {
+                width: 100%;
+            }
+
             .priority-badge {
                 width: 100%;
                 text-align: center;
@@ -308,6 +356,29 @@
                 console.log('使用空列表');
             }
             renderTodos();
+        }
+
+        // 判断截止时间状态
+        function getDueDateStatus(dueDate) {
+            if (!dueDate) return { class: '', text: '无截止时间', urgent: false };
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const due = new Date(dueDate);
+            due.setHours(0, 0, 0, 0);
+            
+            const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) {
+                return { class: 'urgent', text: `已过期 ${Math.abs(diffDays)} 天`, urgent: true };
+            } else if (diffDays === 0) {
+                return { class: 'urgent', text: '今天截止', urgent: true };
+            } else if (diffDays <= 2) {
+                return { class: 'upcoming', text: `${diffDays} 天后截止`, urgent: false };
+            } else {
+                return { class: '', text: `截止: ${dueDate}`, urgent: false };
+            }
         }
 
         // 渲染待办列表
@@ -374,10 +445,24 @@
         function renderTodoItem(todo, isCompleted) {
             const priorityLabels = { high: '高', medium: '中', low: '低' };
             const statusIcon = todo.completed ? '✅' : '⬜';
+            const dueStatus = getDueDateStatus(todo.dueDate);
+            
+            let itemClasses = `todo-item ${todo.completed ? 'completed' : ''} ${todo.priority}-priority`;
+            if (dueStatus.urgent && !todo.completed) {
+                itemClasses += ' urgent';
+            }
+
             return `
-                <div class="todo-item ${todo.completed ? 'completed' : ''} ${todo.priority}-priority">
+                <div class="${itemClasses}">
                     <span class="status-icon">${statusIcon}</span>
-                    <div class="todo-text">${escapeHtml(todo.text)}</div>
+                    <div class="todo-content">
+                        <div class="todo-text">${escapeHtml(todo.text)}</div>
+                        <div class="todo-meta">
+                            <span class="due-date ${dueStatus.class}">
+                                📅 ${dueStatus.text}
+                            </span>
+                        </div>
+                    </div>
                     <span class="priority-badge ${todo.priority}">${priorityLabels[todo.priority]}</span>
                 </div>
             `;
